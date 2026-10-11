@@ -1,0 +1,6 @@
+httpx
+numpy
+pandas
+pydantic>=2
+pyyaml
+pytest

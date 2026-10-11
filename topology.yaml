@@ -1,0 +1,8 @@
+#MVP topology: getway -> checkout -> payment -> inventory -> Postgres 
+entry: gateway 
+services:
+  gateway: {calls: [checkout]}
+  checkout: {calls: [payment]}
+  payment: {db: {pool_max: 8, query_ms: 40}}
+
+  
