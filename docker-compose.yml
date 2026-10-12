@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    command:
+    - postgres
+    - -c
+    - max_connections=300
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U app -d app
+      interval: 3s
+      retries: 20
+  gateway:
+    image: incident-app
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: gateway
+      UPSTREAMS: '{"checkout": "http://checkout:8000"}'
+    ports:
+    - 8000:8000
+    depends_on:
+      checkout:
+        condition: service_started
+  checkout:
+    image: incident-app
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: checkout
+      UPSTREAMS: '{"payment": "http://payment:8000"}'
+    ports:
+    - 8001:8000
+    depends_on:
+      payment:
+        condition: service_started
+  payment:
+    image: incident-app
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_NAME: payment
+      UPSTREAMS: '{}'
+      DB_ENABLED: '1'
+      DATABASE_URL: postgresql://app:app@postgres:5432/app
+      DB_POOL_MAX: '8'
+      DB_QUERY_MS: '40'
+    ports:
+    - 8002:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+  prometheus:
+    image: prom/prometheus
+    volumes:
+    - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+    - 9090:9090
