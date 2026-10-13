@@ -6,7 +6,6 @@ hides exactly the overload behaviour you want to study.
 import argparse
 import asyncio
 import math
-from os import name
 import random
 import time
 
@@ -20,7 +19,7 @@ async def _one(client, url, stats):
     except httpx.HTTPError:
         stats["err"] += 1
 
-# rps- request per second (it targets the request rate), 
+
 async def run_load(url: str, rps: float, duration: float, quiet: bool = False) -> dict:
     stats = {"ok": 0, "err": 0}
     tasks: set = set()
@@ -41,16 +40,16 @@ async def run_load(url: str, rps: float, duration: float, quiet: bool = False) -
     return stats
 
 
-if name == "main":
+if __name__ == "__main__":
     import pathlib
     import sys
-    sys.path.insert(0, str(pathlib.Path(file).resolve().parents[1]))
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
     import topology
 
     p = argparse.ArgumentParser()
-    p.add_argument("url", default=None, help="default: entry service from topology")
-    p.add_argument("request per second", type=float, default=30)
-    p.add_argument("duration", type=float, default=600)
+    p.add_argument("--url", default=None, help="default: entry service from topology")
+    p.add_argument("--rps", type=float, default=30)
+    p.add_argument("--duration", type=float, default=600)
     a = p.parse_args()
     url = a.url or f"http://localhost:{topology.ports(topology.load())[topology.load()['entry']]}/work"
     print("done", asyncio.run(run_load(url, a.rps, a.duration)))
